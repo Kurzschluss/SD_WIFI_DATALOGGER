@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\Users\\simon\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\**",
+                "C:\\Users\\simon\\OneDrive\\Dokumente\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\avr\\libraries\\SPI\\src\\**",
+                "C:\\Users\\simon\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.6.3\\**",
+                "C:\\Users\\simon\\AppData\\Local\\Arduino15\\packages\\**"
+            ],
+            "forcedInclude": [
+                "C:\\Users\\simon\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.6.3\\cores\\arduino\\Arduino.h"
+            ],
+            "defines": [
+                "USBCON"
+            ],
+            "intelliSenseMode": "gcc-x86",
+            "compilerPath": "C:/Program Files (x86)/Arduino/hardware/tools/avr/bin/avr-gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
