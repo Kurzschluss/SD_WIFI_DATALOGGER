@@ -3,7 +3,7 @@ begin = now+minutes(0)+seconds(3);
 measurementDuration_s = 2;
 measurementInterval_s = 60;
 assert(measurementInterval_s > measurementDuration_s*8);
-counts = 3;
+counts = 5;
 sicherheitsfaktor_aufwachen = 5;
 
 

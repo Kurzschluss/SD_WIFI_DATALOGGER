@@ -76,6 +76,11 @@ uint16_t isrOver = 0;
 file_t binFile;
 file_t csvFile;
 
+MyRTC* myrtc;
+void setmyrtc(MyRTC * addr){
+  myrtc = addr;
+} 
+
 //==============================================================================
 // Error messages stored in flash.
 #define error(msg) (Serial.println(F(msg)),errorHalt())
@@ -480,7 +485,7 @@ void logData() {
           ts_stopTimer();
       }
     }
-    if (Serial.available() || getStopLogging()) {
+    if (Serial.available() || myrtc->getStopLogging()) {
       // Stop ISR interrupts.
       ts_stopTimer();
       break;

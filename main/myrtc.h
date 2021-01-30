@@ -1,54 +1,71 @@
-/******************************************************************************************
-/*	myrtc.h
-	Created: 13.01.2021
-	Author: Simon Wilkes
-	Last Modified: 13.01.2021
-	By: Simon Wilkes
- 
-	Definitions of myrtc.cpp that are needed by other files are written here.
-******************************************************************************************/
+/**
+ * @file myrtc.h
+ * @author Simon Wilkes (simonwilkes@hotmail.de)
+ * @brief 
+ * @version 0.1
+ * @date 2021-01-30
+ * 
+ * 
+ */
 
 
 
 #ifndef _MYRTC_
 #define _MYRTC_
 
+// ------------------------------------------------------------------------------------
+// standart includes
+#include "stdint.h"
+#include "stddef.h"
+// ------------------------------------------------------------------------------------
+// specific includes
+
+
 
 // ------------------------------------------------------------------------------------
 // Definitions
 
+#define seconds_default 0
+#define minutes_default 0
+#define hours_default 0
+#define day_default 11
+#define month_default 1
+#define year_default 21
+
+// ===================================================================================
+// Class definition
+
+class MyRTC{
+	public:
+		MyRTC();
+		void init(char* time);
+		bool getStopLogging();
+		bool getStartLogging();
+		void setLoggingStart(char* time);
+		void setLoggingEnd(char* time);
+		void setNextReset(char* time);
+		void startAlarms();
+		void alarmMatch();
+		void waitForReset();
+
+	private:
+		void convertDates(char* datestring, int out[6]);
+		void setAlarm(int alarm[6]);
+
 
 // ------------------------------------------------------------------------------------
-// Function prototypes
+// variables
+	private:
+		uint32_t MessureBegin = 0;
 
-/**************************************************************************************
-/*	initRTC
-	
-	@brief	this is a stub
-			
-			
-	
-	@return always 0, no error code usable
-***************************************************************************************/
-void initRTC(char* time);
+		bool started = 0;
+		bool stopLogging = 0;
 
-int getStopLogging();
-int getStartLogging();
+		int now[6];
+		int startTime[6];
+		int endTime[6];
+		int resetTime[6];
 
-
-void setLoggingStart(char* time);
-
-void setLoggingEnd(char* time);
-
-void setNextReset(char* time);
-
-void alarmMatch();
-
-void convertDates(char* datestring, int out[6]);
-
-void mySetAlarm(int alarm[6]);
-
-void waitForReset();
-void RTCStartAlarms();
+};
 
 #endif // _MYRTC_

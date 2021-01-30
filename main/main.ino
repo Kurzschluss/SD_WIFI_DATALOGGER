@@ -16,10 +16,17 @@
 #include "mySD.h"
 
 
+MyRTC myRTC;
+
+
+
+
+
+
 void TC3_Handler(){
   bufferData(adc_getValue(14) * adcSensitivity);
   bufferData(adc_getValue(15) * adcSensitivity);
-  if(getStopLogging()){
+  if(myRTC.getStopLogging()){
     ts_stopTimer();
   }
   TC3->COUNT16.INTFLAG.reg |= TC_INTFLAG_MC0; // Match Compare Register 0
@@ -31,6 +38,7 @@ void adcInit() {
 
 
 void setup(){
+    setmyrtc(&myRTC);
     pinMode(ERROR_LED_PIN, OUTPUT);
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
@@ -50,94 +58,51 @@ void setup(){
 
 
 void loop(){
-    // startmessaging();
-    LongTimeMeasurement();
+    WifiMeasurement();
 }
 
-void LongTimeMeasurement(){
+void WifiMeasurement(){
   initMatlabCommunication();
-  RTCStartAlarms();
+  myRTC.startAlarms();
   createBinFile();
   while(true){
-    if(getStartLogging()){
+    if(myRTC.getStartLogging()){
       logData();
       createCsvFile();
       binaryToCsv();
       csvOverTcp();
       digitalWrite(LED_BUILTIN, LOW);
-      waitForReset();
+      myRTC.waitForReset();
     }
   }
 }
 
-
-void startmessaging(){
-    // Read any Serial data.
-    clearSerialInput();
-    Serial.println();
-    Serial.println(F("type:"));
-    Serial.println(F("b - open existing bin file"));
-    Serial.println(F("c - convert file to csv"));
-    Serial.println(F("t - convert and send over tcp"));
-    Serial.println(F("l - list files"));
-    Serial.println(F("p - print data to Serial"));
-    Serial.println(F("r - record ADC data"));
-    Serial.println(F("s - start recording cycle (10s, 120s)"));
-    while(!Serial.available()) {
-        SysCall::yield();
-    }
-    char c = tolower(Serial.read());
-    Serial.println();
-    if (ERROR_LED_PIN >= 0) {
-        digitalWrite(ERROR_LED_PIN, LOW);
-    }
-    // Read any Serial data.
-    clearSerialInput();
-
-    if (c == 'b') {
-      openBinFile();
-    } else if (c == 'c') {
-        if (createCsvFile()) {
-            binaryToCsv();
-        }
-    } else if (c == 'l') {
-        readls();    
-    } else if (c == 't') {
-        if (createCsvFile()) {
-      binaryToCsv();
-        }
-      csvOverTcp();    
-    } else if (c == 'p') {
-      printData();
-    } else if (c == 's') {
-      LongTimeMeasurement();
-    } else if (c == 'r') {
-      createBinFile();
-      logData();
-    } else {
-      Serial.println(F("Invalid entry"));
-    }
-    
-}
-
 void initMatlabCommunication(){
   char date[15];
+
   TCPflush();
   delay(100);
+
   char message[] = "start of transmission";
   TCPwrite(message);
   delay(100);
+
   TCPread(date, 15);
   delay(100);
+
   TCPread(date, 15);
-  initRTC(date);
+  myRTC.init(date);
+  delay(100);
+
   TCPread(date, 15);
   delay(100);
-  setLoggingStart(date);
+  myRTC.setLoggingStart(date);
+
   TCPread(date, 15);
   delay(100);
-  setLoggingEnd(date);
+  myRTC.setLoggingEnd(date);
+
   TCPread(date, 15);
   delay(100);
-  setNextReset(date);
+  myRTC.setNextReset(date);
 }
