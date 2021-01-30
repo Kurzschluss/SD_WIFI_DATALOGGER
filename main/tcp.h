@@ -38,8 +38,11 @@ void waitForClient();
 
 WiFiClient giveclient();
 
+int TCPread(char* buffer, int len);
 
+void TCPwrite(char* buffer);
 
+void TCPflush();
 
 
 

@@ -40,6 +40,38 @@ void initWifi(){
     server.begin();
     printWiFiStatus();
 }
+void restartWifi(){
+    WiFi.end();
+    while ( status != WL_CONNECTED) {
+        status = WiFi.begin(ssid, pass);
+        delay(100);
+    }
+    server.begin();
+    while(!client){
+        client = server.available();
+    }
+}
+
+int TCPread(char* buffer, int len){
+    if (client.available() > 0) {
+        // read the bytes incoming from the client:
+        int i = 0;
+        while(i<len){
+            buffer[i] = client.read();
+            Serial.print(buffer[i]);
+            if(buffer[i] == 13){
+            Serial.println("");
+                return i;
+            }
+            i++;
+        }
+        return 0;
+    }
+}
+
+void TCPwrite(char* buffer){
+    client.println(buffer);
+}
 
 void waitForClient(){
     Serial.println("Waiting for client connection");
@@ -49,6 +81,11 @@ void waitForClient(){
     Serial.println("We have a new client");
 }
 
+
 WiFiClient giveclient(){
     return client;
+}
+
+void TCPflush(){
+    client.flush();
 }

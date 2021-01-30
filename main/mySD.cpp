@@ -78,6 +78,7 @@ file_t csvFile;
 
 //==============================================================================
 // Error messages stored in flash.
+#define error(msg) (Serial.println(F(msg)),errorHalt())
 #define assert(e) ((e) ? (void)0 : error("assert: " #e))
 //------------------------------------------------------------------------------
 //
@@ -543,4 +544,3 @@ void readls(){
   Serial.println(F("ls:"));
   sd.ls(&Serial, LS_DATE | LS_SIZE);
 }
-

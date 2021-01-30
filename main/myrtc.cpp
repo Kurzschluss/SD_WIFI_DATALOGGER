@@ -21,41 +21,75 @@ const byte year_begin = 21;
 
 uint32_t MessureBegin;
 
+uint8_t started = 0;
 uint8_t stopLogging = 0;
 
-void initRTC(){
+int now[6];
+int startTime[6];
+int endTime[6];
+int resetTime[6];
+
+void initRTC(char* time){
+    convertDates(time, now);
     rtc.begin();
-    rtc.setTime(hours_begin, minutes_begin, seconds_begin);
-    rtc.setDate(day_begin, month_begin, year_begin);
+    rtc.setTime(now[3], now[4], now[5]);
+    rtc.setDate(now[2], now[1], now[0]);
 }
 
 int getStopLogging(){
     return stopLogging;
 }
-
-//sleeps for x since last start of meassurement
-void sleepFor(int minutes, int seconds){
-    int set = minutes * 60 + seconds + MessureBegin;
-    rtc.setAlarmEpoch(set);
-    rtc.enableAlarm(rtc.MATCH_HHMMSS);
-    rtc.standbyMode();
+int getStartLogging(){
+    return started;
 }
 
 
-void setLoggingTime(int minutes, int seconds){
-    stopLogging = 0;
-    MessureBegin = rtc.getEpoch();
-    int set = minutes * 60 + seconds + MessureBegin;
-    Serial.print("Begin: ");
-    Serial.println(MessureBegin);
-    Serial.print("set: ");
-    Serial.println(set);
-    rtc.setAlarmEpoch(set);
-    rtc.enableAlarm(rtc.MATCH_HHMMSS);
-    rtc.attachInterrupt(alarmMatch);
+void setLoggingStart(char* time){
+    convertDates(time, startTime);
+}
+
+void setLoggingEnd(char* time){
+    convertDates(time, endTime);
+}
+
+void setNextReset(char* time){
+    convertDates(time, resetTime);
 }
 
 void alarmMatch(){
     rtc.detachInterrupt();
-    stopLogging = 1;
+    Serial.println("alarm");
+    if(started){
+        stopLogging = 1;        
+    } else {
+        started = 1;
+        mySetAlarm(endTime);
+    } 
+}
+
+void convertDates(char* datestring, int out[6]){
+    out[0] = ((int)datestring[0]-48)*1000 + ((int)datestring[1]-48)*100 + ((int)datestring[2]-48)*10 + ((int)datestring[3]-48);
+    out[1] = ((int)datestring[4]-48)*10 + ((int)datestring[5]-48);
+    out[2] = ((int)datestring[6]-48)*10 + ((int)datestring[7]-48);
+    out[3] = ((int)datestring[8]-48)*10 + ((int)datestring[9]-48);
+    out[4] = ((int)datestring[10]-48)*10 + ((int)datestring[11]-48);
+    out[5] = ((int)datestring[12]-48)*10 + ((int)datestring[13]-48);
+}
+
+void RTCStartAlarms(){
+    mySetAlarm(startTime);
+}
+
+void mySetAlarm(int alarm[6]){
+    rtc.setAlarmHours(alarm[3]);
+    rtc.setAlarmMinutes(alarm[4]);
+    rtc.setAlarmSeconds(alarm[5]);
+    rtc.enableAlarm(rtc.MATCH_HHMMSS);
+    rtc.attachInterrupt(alarmMatch);
+}
+
+void waitForReset(){
+    mySetAlarm(resetTime);
+    rtc.standbyMode();
+    NVIC_SystemReset();
 }

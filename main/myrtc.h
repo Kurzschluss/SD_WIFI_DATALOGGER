@@ -30,18 +30,25 @@
 	
 	@return always 0, no error code usable
 ***************************************************************************************/
-void initRTC();
+void initRTC(char* time);
 
 int getStopLogging();
+int getStartLogging();
 
-void sleepFor(int minutes, int seconds);
 
-void setLoggingTime(int minutes, int seconds);
+void setLoggingStart(char* time);
+
+void setLoggingEnd(char* time);
+
+void setNextReset(char* time);
 
 void alarmMatch();
 
+void convertDates(char* datestring, int out[6]);
 
+void mySetAlarm(int alarm[6]);
 
-
+void waitForReset();
+void RTCStartAlarms();
 
 #endif // _MYRTC_
