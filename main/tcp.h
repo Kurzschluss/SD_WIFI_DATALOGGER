@@ -1,48 +1,97 @@
-/******************************************************************************************
-/*	tcp.h
-	Created: 13.01.2021
-	Author: Simon Wilkes
-	Last Modified: 13.01.2021
-	By: Simon Wilkes
- 
-	Definitions of tcp.cpp that are needed by other files are written here.
-******************************************************************************************/
+/**
+ * @file tcp.h
+ * @author Simon Wilkes (simonwilkes@hotmail.de)
+ * @brief provides class for communicating with a dedicated Matlab script
+ * @version 1.0
+ * @date 2021-01-31
+ * 
+ * 
+ */
 #ifndef _TCP_
 #define _TCP_
 #include <WiFi101.h>
+#include "config.h"
 
 // ------------------------------------------------------------------------------------
 // Definitions
-#define MYSSID "testMe"
-#define MYPASS "wasd1234"
 
 
 
-// ------------------------------------------------------------------------------------
-// Function prototypes
+/**
+ * @brief provides means for communicating with a dedicated Matlab script
+ * 
+ */
+class MyWifi{
+	public:
+        /**
+         * @brief Construct a new My Wifi object
+         * 
+         * @param port optional (default = 23)
+         */
+		MyWifi(const int port = 23);
 
-/**************************************************************************************
-/*	ts_init
-	
-	@brief	waits for wifi connection to be established
-			
-			
-	
-	@return always 0, no error code usable
-***************************************************************************************/
-void initWifi();
+        /**
+         * @brief initializes the Wifi. Only returns when connection is established. Uses ssid and pass
+         * Defined in config.h
+         * 
+         */
+		void init();
 
-void printWiFiStatus();
+        /**
+         * @brief Prints the Wifi Status to Serial
+         * 
+         */
+		void printStatus();
 
-void waitForClient();
+        /**
+         * @brief waits for client connection. Only returns when established
+         * 
+         */
+		void waitForClient();
 
-WiFiClient giveclient();
+        /**
+         * @brief 
+         * 
+         * @param buffer char[] received characters get saved to this buffer
+         * @param len max count of characters to receive
+         * @return int number of characters received returns 0 when buffer was not big enough
+         */
+		int read(char* buffer, int len);
 
-int TCPread(char* buffer, int len);
+        /**
+         * @brief writes buffer to TCP connection. Adds an \r at the end (ASCII 13)
+         * 
+         * @param buffer char date to get send
+         */
+		void write(char* buffer);
 
-void TCPwrite(char* buffer);
+        /**
+         * @brief flushes the tcp connection
+         * 
+         */
+		void flush();
 
-void TCPflush();
+        /**
+         * @brief saves the connected client
+         * 
+         */
+		WiFiClient client;
+	private:
+
+        /**
+         * @brief server object
+         * 
+         */
+		WiFiServer server;
+
+        /**
+         * @brief status of server.
+         * 
+         */
+		int status = WL_IDLE_STATUS;
+};
+
+
 
 
 

@@ -1,8 +1,8 @@
 /**
  * @file myrtc.h
  * @author Simon Wilkes (simonwilkes@hotmail.de)
- * @brief 
- * @version 0.1
+ * @brief provides class for controlling the internal RTC
+ * @version 1.0
  * @date 2021-01-30
  * 
  * 
@@ -18,11 +18,6 @@
 #include "stdint.h"
 #include "stddef.h"
 // ------------------------------------------------------------------------------------
-// specific includes
-
-
-
-// ------------------------------------------------------------------------------------
 // Definitions
 
 #define seconds_default 0
@@ -35,6 +30,10 @@
 // ===================================================================================
 // Class definition
 
+/**
+ * @brief provides means for controlling the internal RTC
+ * 
+ */
 class MyRTC{
 	public:
 		MyRTC();
@@ -58,8 +57,8 @@ class MyRTC{
 	private:
 		uint32_t MessureBegin = 0;
 
-		bool started = 0;
-		bool stopLogging = 0;
+		volatile bool started = 0;
+		volatile bool stopLogging = 0;
 
 		int now[6];
 		int startTime[6];

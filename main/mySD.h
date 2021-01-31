@@ -1,109 +1,129 @@
-/******************************************************************************************
-/*	mySD.h
-	Created: 13.01.2021
-	Author: Simon Wilkes
-	Last Modified: 13.01.2021
-	By: Simon Wilkes
- 
-	Definitions of mySD.cpp that are needed by other files are written here.
-******************************************************************************************/
+/**
+ * @file mySD.h
+ * @author Simon Wilkes (simonwilkes@hotmail.de)
+ * @brief provides class for controlling SdFat 
+ * @version 1.0
+ * @date 2021-01-31 
+ */
 #ifndef _MYSD_
+#define _MYSD_
+
 #include "stdint.h"
 #include "stddef.h"
 #include "SdFat.h"
 #include "BufferedPrint.h"
 #include "FreeStack.h"
+
 #include "myrtc.h"
+#include "tcp.h"
+#include "config.h"
 
 
-// ------------------------------------------------------------------------------------
-// Definitions
 
-#define ENABLE_DEDICATED_SPI 0
-#define CS_SD 18
-#define PIN_COUNT 2
-
-//------------------------------------------------------------------------------
-// SD_FAT_TYPE = 0 for SdFat/File as defined in SdFatConfig.h,
-// 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
-#define SD_FAT_TYPE 1
-
-// Test with reduced SPI speed for breadboards.  SD_SCK_MHZ(4) will select
-// the highest speed supported by the board that is not over 4 MHz.
-// Change SPI_SPEED to SD_SCK_MHZ(50) for best performance.
-#define SPI_SPEED SD_SCK_MHZ(4)
+constexpr int evallength(){
+    return sizeof(LOG_FILE_NAME);
+}
+// Temporary log file.  Will be deleted if a reset or power failure occurs.
+#define TMP_FILE_NAME "tmp_adc.bin" 
 
 
-// log file name.  Integer field before dot will be incremented.
-#define LOG_FILE_NAME "AvrAdc00.bin"
 
 //------------------------------------------------------------------------------
 // File definitions.
-//
+
+//due to using FAT32
+typedef File32 file_t; 
+
 // Maximum file size in bytes.
 // The program creates a contiguous file with MAX_FILE_SIZE_MiB bytes.
 // The file will be truncated if logging is stopped early.
 const uint32_t MAX_FILE_SIZE_MiB = 100;  // 100 MiB file.
+const uint32_t MAX_FILE_SIZE = MAX_FILE_SIZE_MiB << 20;
+
 
 const size_t BLOCK_SIZE = 64;
+
 //------------------------------------------------------------------------------
-// First block of file.
+// FIFO size definition. Use a multiple of 512 bytes for best performance.
+const size_t FIFO_SIZE_BYTES = 4*512;
+
+
+
+//------------------------------------------------------------------------------
+// First block of file. Work not finished. Could be bullshit data. But surfs the pupose of reserving space
 const size_t PIN_NUM_DIM = BLOCK_SIZE - 3*sizeof(uint32_t) - 2*sizeof(uint8_t);
 struct metadata_t {
-  uint32_t adcFrequency;           // ADC clock frequency
-  uint32_t cpuFrequency;           // CPU clock frequency
-  uint32_t sampleInterval;         // Sample interval in CPU cycles.
-  uint8_t recordEightBits;         // Size of ADC values, nonzero for 8-bits.
-  uint8_t pinCount;                // Number of analog pins in a sample.
-  uint8_t pinNumber[PIN_NUM_DIM];  // List of pin numbers in a sample.
+    uint32_t adcFrequency;           // ADC clock frequency
+    uint32_t cpuFrequency;           // CPU clock frequency
+    uint32_t sampleInterval;         // Sample interval in CPU cycles.
+    uint8_t recordEightBits;         // Size of ADC values, nonzero for 8-bits.
+    uint8_t pinCount;                // Number of analog pins in a sample.
+    uint8_t pinNumber[PIN_NUM_DIM];  // List of pin numbers in a sample.
 };
 
+// Defindes the memory of fifo Blocks
 const size_t DATA_DIM16 = (BLOCK_SIZE - 2*sizeof(uint16_t))/sizeof(uint16_t);
-struct block16_t {
-  unsigned short count;    // count of data values
-  unsigned short overrun;  // count of overruns since last block
-  unsigned short data[DATA_DIM16];
+struct block_t {
+    unsigned short count;    // count of data values
+    unsigned short overrun;  // count of overruns since last block
+    unsigned short data[DATA_DIM16];
 };
 
+// Size of FIFO in blocks.
+size_t const FIFO_DIM = FIFO_SIZE_BYTES/sizeof(block_t);
 
-
-
-// ------------------------------------------------------------------------------------
-// Function prototypes
-
-void setmyrtc(MyRTC * addr);
-void initSD();
 
 //------------------------------------------------------------------------------
-// Convert binary file to csv file.
-void binaryToCsv();
-void binaryToTcp();
-void csvOverTcp();
-
-//------------------------------------------------------------------------------
-void createBinFile();
-//------------------------------------------------------------------------------
-bool createCsvFile();
-//------------------------------------------------------------------------------
-void openBinFile();
-
-//------------------------------------------------------------------------------
-// Print data file to Serial
-void printData();
-
-void bufferData(uint16_t d);
-
-void logData();
-
-void printUnusedStack();
-
-void clearSerialInput();
-
-bool serialReadLine(char* str, size_t size);
-
-void readls();
+// Error messages stored in flash.
+#define error(msg) (Serial.println(F(msg)),errorHalt())
+#define assert(e) ((e) ? (void)0 : error("assert: " #e))
 
 
+/**
+ * @brief provides means for writing from and to the SD
+ * 
+ */
+class MySD{
+    public:
+        MySD();
+        void initSD();
+        void binaryToCsv();
+        void csvOverTcp(MyWifi* wifi);
+        void createBinFile();
+        bool createCsvFile();
+        void bufferData(uint16_t d);
+        void logData(MyRTC* rtc);
+
+    private:
+        void errorHalt();
+
+        SdFat32 sd;
+
+        // name of File on SD
+        char binName[evallength()] = LOG_FILE_NAME;
+        // Maximum length name including zero byte. 13 is added because that is the minimum number 
+        // of bytes required for getting the filename
+        const size_t NAME_DIM = evallength()+13; 
+
+        
+        // SD chip select pin.
+        const uint8_t SD_CS_PIN = CS_SD; 
+
+        file_t binFile;
+        file_t csvFile;
+
+        block_t* fifoData; 
+        // volatile - shared, ISR and background.
+        volatile size_t fifoCount = 0; 
+        // Only accessed by ISR during logging.
+        size_t fifoHead = 0;  
+        // Only accessed by writer during logging.
+        size_t fifoTail = 0;          
+        // Pointer to current buffer.        
+        block_t* isrBuf = nullptr;  
+        // overrun count
+        uint16_t isrOver = 0;   
+};
 
 
 #endif // _MYSD_

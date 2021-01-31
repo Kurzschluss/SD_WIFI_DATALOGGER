@@ -1,23 +1,21 @@
-/******************************************************************************************
-/*	tcp.cpp
-	Created: 13.01.2021
-	Author: Simon Wilkes
-	Last Modified: 13.01.2021
-	By: Simon Wilkes
- 
-	implements used functions of wifi communication
-******************************************************************************************/
+/**
+ * @file tcp.cpp
+ * @author Simon Wilkes (simonwilkes@hotmail.de)
+ * @brief implements functions of tcp.h
+ * @version 1.0
+ * @date 2021-01-31
+ * 
+ * 
+ */
 #include "tcp.h"
 #include <WiFi101.h>
 
-char ssid[] = MYSSID;
-char pass[] = MYPASS;
 
-WiFiServer server(23);
-int status = WL_IDLE_STATUS;
-WiFiClient client;
+MyWifi::MyWifi(const int port):server(port){
+}
 
-void printWiFiStatus() {
+
+void MyWifi::printStatus() {
     Serial.print("SSID: ");
     Serial.println(WiFi.SSID());
     IPAddress ip = WiFi.localIP();
@@ -29,63 +27,47 @@ void printWiFiStatus() {
     Serial.println(" dBm");
 }
 
-void initWifi(){    
+void MyWifi::init(){    
     while ( status != WL_CONNECTED) {
         Serial.print("Attempting to connect to SSID: ");
-        Serial.println(ssid);
-        status = WiFi.begin(ssid, pass);
+        Serial.println(MYSSID);
+        status = WiFi.begin(MYSSID, MYPASS);
         delay(1000);
     }
     Serial.println("connected to Wifi");
     server.begin();
-    printWiFiStatus();
-}
-void restartWifi(){
-    WiFi.end();
-    while ( status != WL_CONNECTED) {
-        status = WiFi.begin(ssid, pass);
-        delay(100);
-    }
-    server.begin();
-    while(!client){
-        client = server.available();
-    }
+    printStatus();
 }
 
-int TCPread(char* buffer, int len){
-    if (client.available() > 0) {
-        // read the bytes incoming from the client:
-        int i = 0;
-        while(i<len){
-            buffer[i] = client.read();
-            Serial.print(buffer[i]);
-            if(buffer[i] == 13){
+
+int MyWifi::read(char* buffer, int len){        
+    int i = 0;
+    while(i<len){
+        char buf = client.read();   // read the bytes incoming from the client:        
+        if(buf == 13){              // 13 == \r
             Serial.println("");
-                return i;
-            }
-            i++;
+            return i;               //returns read count
         }
-        return 0;
+        buffer[i] = buf;
+        Serial.print(buffer[i]);
+        i++;
     }
+    return 0;                       //to buffer not big enough
 }
 
-void TCPwrite(char* buffer){
-    client.println(buffer);
+void MyWifi::write(char* buffer){
+    client.println(buffer);         
 }
 
-void waitForClient(){
+void MyWifi::waitForClient(){
     Serial.println("Waiting for client connection");
-    while(!client){
+    while(!client){                     ///only exit then client is available
         client = server.available();
     }
     Serial.println("We have a new client");
 }
 
 
-WiFiClient giveclient(){
-    return client;
-}
-
-void TCPflush(){
+void MyWifi::flush(){
     client.flush();
 }
