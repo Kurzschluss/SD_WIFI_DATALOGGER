@@ -14,6 +14,8 @@
 #include "myrtc.h"
 #include "mySD.h"
 
+#define DELAY 2500
+
 
 MyRTC myRTC;
 MyWifi myWifi;
@@ -69,6 +71,10 @@ void WifiMeasurement(){
         mySD.binaryToCsv();
         mySD.csvOverTcp(&myWifi);
         digitalWrite(LED_BUILTIN, LOW);
+        delay(DELAY);
+
+        delay(DELAY);
+        WiFi.end();
         myRTC.waitForReset();
         }
     }
@@ -79,36 +85,34 @@ void WifiMeasurement(){
  * 
  */
 void initMatlabCommunication(){
-    char date[15];
+    
+    char datenow[14];
+    char dateStart[14];
+    char dateEnd[14];
+    char dateReset[14];
 
     myWifi.flush();
-    delay(100);
-
     char message[] = "start of transmission";
     myWifi.write(message);
-    delay(100);
+    delay(DELAY);
 
     //just for again flushing the input should read "flush"
-    myWifi.read(date, 15);
-    delay(100);
-
-    myWifi.read(date, 15);
-    myWifi.write(date);
-    myRTC.init(date);
-    delay(100);
-
-    myWifi.read(date, 15);
-    myWifi.write(date);
-    myRTC.setLoggingStart(date);
-    delay(100);
-
-    myWifi.read(date, 15);
-    myWifi.write(date);
-    myRTC.setLoggingEnd(date);
-    delay(100);
-
-    myWifi.read(date, 15);
-    myWifi.write(date);
-    myRTC.setNextReset(date);
-    delay(100);
+    // char discard[15];
+    // myWifi.read(discard, 15);
+    myWifi.read(datenow, 14);
+    myRTC.init(datenow);
+    myWifi.read(dateStart, 14);
+    myRTC.setLoggingStart(dateStart);
+    myWifi.read(dateEnd, 14);    
+    myRTC.setLoggingEnd(dateEnd);
+    myWifi.read(dateReset, 14);
+    myRTC.setNextReset(dateReset);
+    delay(DELAY);
+    myWifi.client.flush();
+    myWifi.server.flush();
+    myWifi.write(datenow);
+    myWifi.write(dateStart);
+    myWifi.write(dateEnd);
+    myWifi.write(dateReset);
+    delay(DELAY);
 }

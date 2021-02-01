@@ -76,13 +76,13 @@ class MyWifi{
          * 
          */
 		WiFiClient client;
-	private:
-
         /**
          * @brief server object
          * 
          */
 		WiFiServer server;
+	private:
+
 
         /**
          * @brief status of server.

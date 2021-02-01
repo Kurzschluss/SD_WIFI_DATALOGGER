@@ -40,19 +40,28 @@ void MyWifi::init(){
 }
 
 
+// int MyWifi::read(char* buffer, int len){        
+//     int i = 0;
+//     while(i<len){
+//         char buf = client.read();   // read the bytes incoming from the client:        
+//         if(buf == 13){              // 13 == \r
+//             Serial.println("");
+//             return i;               //returns read count
+//         }
+//         buffer[i] = buf;
+//         Serial.print(buffer[i]);
+//         i++;
+//     }
+//     return 0;                       //to buffer not big enough
+// }
+
 int MyWifi::read(char* buffer, int len){        
-    int i = 0;
-    while(i<len){
-        char buf = client.read();   // read the bytes incoming from the client:        
-        if(buf == 13){              // 13 == \r
-            Serial.println("");
-            return i;               //returns read count
-        }
-        buffer[i] = buf;
-        Serial.print(buffer[i]);
-        i++;
+    int done = -1;
+    while(done == -1){
+        done = client.read((uint8_t*) buffer, len);
     }
-    return 0;                       //to buffer not big enough
+    Serial.println(buffer);
+    return 1;                       //to buffer not big enough
 }
 
 void MyWifi::write(char* buffer){
@@ -64,6 +73,7 @@ void MyWifi::waitForClient(){
     while(!client){                     ///only exit then client is available
         client = server.available();
     }
+    client.flush();
     Serial.println("We have a new client");
 }
 
